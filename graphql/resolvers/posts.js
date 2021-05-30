@@ -55,6 +55,31 @@ module.exports = {
         throw new Error(err);
       }
     },
+
+    deleteComment: async (_, { postId, commentId }, context) => {
+      const { username } = authenticateToken(context);
+
+      try {
+        const post = await Post.findById(postId);
+        if (post) {
+          const commentIndex = post.comments.findIndex(
+            (c) => c.id === commentId
+          );
+          if (post.comments[commentIndex].username === username) {
+            post.comments = post.comments.filter((c) => c.id !== commentId);
+            await post.save();
+            return post;
+          } else {
+            throw new AuthenticationError("No autorization");
+          }
+        } else {
+          throw new Error("No post found");
+        }
+      } catch (err) {
+        throw new Error(err);
+      }
+    },
+
     async likePost(_, { postId }, context) {
       const { username } = authenticateToken(context);
 
@@ -75,10 +100,10 @@ module.exports = {
           await post.save();
           return post;
         } else {
-          throw new AuthenticationError("Post not found");
+          throw new Error("Post not found");
         }
       } catch (err) {
-        throw new Error(err);
+        throw new AuthenticationError("Post Not fount");
       }
     },
   },
