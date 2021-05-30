@@ -1,3 +1,8 @@
+const jwt = require("jsonwebtoken");
+const { AuthenticationError } = require("apollo-server");
+
+const { SECRET_KEY } = require("../config");
+
 module.exports.validateResgisterInput = (
   username,
   password,
@@ -45,4 +50,24 @@ module.exports.validateLoginInput = (username, password) => {
     err,
     valid: Object.keys(err).length < 1,
   };
+};
+
+module.exports.authenticateToken = (context) => {
+  const autHeader = context.req.headers.autherization;
+
+  if (autHeader) {
+    const token = autHeader.split("Bearer ")[1];
+    if (token) {
+      try {
+        const user = jwt.verify(token, SECRET_KEY);
+        return user;
+      } catch (err) {
+        throw new AuthenticationError(" Inalid/Expired token ");
+      }
+    }
+    throw new AuthenticationError(
+      " Token not formatted correct '[Bearer] token "
+    );
+  }
+  throw new AuthenticationError(" Autherization header not provided ");
 };
